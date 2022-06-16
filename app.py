@@ -50,42 +50,56 @@ class BIA:
         plt.plot(self.data['AGE'],self.data['AMOUNT_SPENT'],'o')
         plt.show()
 
-        age = np.array(self.data['AGE'])
+        
         amount = np.array(self.data['AMOUNT_SPENT'])
+        #create column sex_code
+        sex_code = []
+        for sex in self.data['SEX']:
+            if sex == 'M':
+                sex_code.append(1)
+            else:
+                sex_code.append(0)
 
-        age = age.reshape((-1,1))
+        db_model_cov = pd.DataFrame()
+        db_model_cov['AGE'] = self.data['AGE']
+        db_model_cov['SEX'] = sex_code
 
         self.model = LinearRegression()
 
-        self.model.fit(age,amount)
+        self.model.fit(db_model_cov,amount)
 
         self.coef = self.model.coef_
         self.intercept = self.model.intercept_
-        self.score = self.model.score(age,amount)
+        self.score = self.model.score(db_model_cov,amount)
 
         print('\n'+'Linear Regression Analysis '+ '\n')
         print(f'Model Score : {self.score}')
         print(f'Coef: {self.coef} Intercept: {self.intercept}')
-        print(f'Relationship: AMOUNT SPENT ~ {self.intercept} + {self.coef[0]}*AGE')
+        print(f'Relationship: AMOUNT SPENT ~ {self.intercept} + {self.coef[0]}*AGE + {self.coef[1]}*MEN')
         print('\n')
 
     #create predictions
     def predict(self):
         method = input('Use standard-list (s) or input a value to predict (i): ')
         if method == 's':
-            profile = [10,20,30,40,50,60,70,80,90]
-            p = np.array(profile)
-            p = p.reshape((-1,1))
-            pred = self.model.predict(p)
+            profile_age = [10,20,30,40,50,60,70,80,90]
+            profile_sex = [0,1,0,1,0,1,0,1,0]
+            test_db = pd.DataFrame()
+            test_db['AGE'] = profile_age
+            test_db['SEX'] = profile_sex
+
+        
+            pred = self.model.predict(test_db)
             
             print('\n')
             for i in range(len(pred)):
-                print(f'Someone with {profile[i]} years should spend ${pred[i]}.')
+                print(f'Someone with {profile_age[i]} years and sex {profile_sex[i]} should spend ${pred[i]}.')
             print('\n')
 
         elif method == 'i':
             age = float(input('select age to predict: '))
-            prediction  = self.intercept + age*self.coef[0]
+            sex = int(input('Select sex, female (0) male (1): '))
+            prediction  = self.intercept + age*self.coef[0] + sex*self.coef[1]
             print(f'Prediction = ${prediction}')
             print('\n')
 
